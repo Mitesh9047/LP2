@@ -1,0 +1,124 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+class Employee {
+private:
+    string name;
+    int age;
+    string department;
+    string designation;
+    unordered_map<string, int> scores;
+    unordered_map<string, int> threshold;
+    unordered_map<string, vector<string>> relevantParameters;
+
+public:
+    Employee() {
+        threshold = {
+            {"punctuality", 9},
+            {"efficiency", 7},
+            {"teamwork", 8},
+            {"problemSolving", 8},
+            {"communication", 9},
+            {"presentation", 9}
+        };
+
+        relevantParameters = {
+            {"HR", {"communication", "presentation", "punctuality"}},
+            {"DEVELOPER", {"efficiency", "problemSolving", "teamwork"}},
+            {"MANAGER", {"communication", "teamwork", "efficiency", "presentation"}}
+        };
+    }
+
+    void inputDetails() {
+        cout << "----- Enter Employee Details -----\n";
+        cout << "Name: ";
+        cin >> name;
+
+        cout << "Age: ";
+        while (!(cin >> age) || age <= 0) {
+            cin.clear();
+            cin.ignore(numeric_limits<streamsize>::max(), '\n');
+            cout << "Invalid age. Enter a valid number: ";
+        }
+
+        cout << "Department: ";
+        cin >> department;
+
+        cout << "Designation (HR/Developer/Manager): ";
+        cin >> designation;
+        transform(designation.begin(), designation.end(), designation.begin(), ::toupper);
+
+        if (relevantParameters.find(designation) == relevantParameters.end()) {
+            cout << "Unknown designation. Using all performance parameters.\n";
+            relevantParameters[designation] = {
+                "punctuality", "efficiency", "teamwork",
+                "problemSolving", "communication", "presentation"
+            };
+        }
+
+        cout << "\n----- Enter Performance Scores (0-10) -----\n";
+        for (const string& param : relevantParameters[designation]) {
+            int score;
+            while (true) {
+                cout << param << ": ";
+                cin >> score;
+                if (score >= 0 && score <= 10) {
+                    scores[param] = score;
+                    break;
+                } else {
+                    cout << "Invalid score. Please enter a number between 0 and 10.\n";
+                }
+            }
+        }
+    }
+
+    void displayImprovementAreas() const {
+        cout << "\n--- Areas Needing Improvement ---\n";
+        for (const string& param : relevantParameters.at(designation)) {
+            if (scores.at(param) < threshold.at(param)) {
+                cout << param << " [Expected: " << threshold.at(param)
+                     << ", Achieved: " << scores.at(param) << "]\n";
+            }
+        }
+    }
+
+    string evaluatePerformance() const {
+        int total = 0;
+        int count = relevantParameters.at(designation).size();
+
+        for (const string& param : relevantParameters.at(designation)) {
+            total += scores.at(param);
+        }
+
+        int average = total / count;
+
+        if (average >= 8) {
+            return "Performance Status: Eligible for increment.";
+        } else if (average >= 5) {
+            displayImprovementAreas();
+            return "Performance Status: Moderate. Needs improvement for increment.";
+        } else {
+            displayImprovementAreas();
+            return "Performance Status: Poor. Significant improvement required.";
+        }
+    }
+
+    void report() {
+        cout << "\n=====================================\n";
+        cout << "Performance Report\n";
+        cout << "-------------------------------------\n";
+        cout << "Name        : " << name << '\n';
+        cout << "Age         : " << age << '\n';
+        cout << "Department  : " << department << '\n';
+        cout << "Designation : " << designation << '\n';
+        cout << evaluatePerformance() << '\n';
+        cout << "=====================================\n";
+    }
+};
+
+int main() {
+    Employee emp;
+    emp.inputDetails();
+    emp.report();
+    return 0;
+}

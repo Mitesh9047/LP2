@@ -1,0 +1,112 @@
+import streamlit as st
+from nltk.chat.util import Chat, reflections
+
+# Movie data and chatbot patterns
+movies = {
+    'Interstellar': ['Morning: 10:00 AM', 'Afternoon: 2:00 PM', 'Evening: 6:00 PM'],
+    'The Dark Knight': ['Morning: 11:00 AM', 'Afternoon: 3:00 PM', 'Evening: 7:00 PM'],
+    'Dune': ['Morning: 9:30 AM', 'Afternoon: 1:30 PM', 'Evening: 5:30 PM']
+}
+
+# Fixed patterns with better regex and properly formatted responses
+patterns = [
+    (r'hi|hello|hey', 
+     ['Hello! How can I assist you today?']),
+    (r'how are you', 
+     ['I am just a bot, but I am always ready to help you book tickets!']),
+    (r'movie|film|movies|show', 
+     ['Currently playing: ' + ', '.join(movies.keys()) + '. Which one interests you?']),
+    (r'.*(interstellar).*', 
+     [f'You selected Interstellar! The showtimes are: {", ".join(movies["Interstellar"])}. Say ''''book'''' to book a ticket?']),
+    (r'The Dark Knight', 
+     [f'You selected The Dark Knight! The showtimes are: {", ".join(movies["The Dark Knight"])}. Say ''''book'''' to book a ticket?']),
+    (r' dune', 
+     [f'You selected Dune! The showtimes are: {", ".join(movies["Dune"])}. Say ''''book'''' to book a ticket?']),
+    (r'.*(ticket|tickets).*', 
+     ['How many tickets do you need?']),
+    (r'time|timing|timings', 
+     ['Here are all the showtimes:\n' + '\n'.join([f"{m}: {', '.join(t)}" for m, t in movies.items()])]),
+    (r'morning|afternoon|evening', 
+     ['Great choice! How many tickets would you like to book?']),
+    (r'book|booking', 
+     ['Let\'s proceed with booking! Please select a movie, showtime, and number of tickets.']),
+    (r'bye|goodbye', 
+     ['Goodbye! Enjoy your movie!']),
+    (r'', 
+     ['I didn\'t understand that. You can ask about movies, showtimes, or say "book tickets" to start booking.'])
+]
+
+# Initialize the chatbot
+movie_bot = Chat(patterns, reflections)
+
+# Booking logic
+def book_tickets(movie, tickets, showtime):
+    ticket_price = 100
+    total_bill = tickets * ticket_price
+    return f" Booking confirmed!\nMovie: {movie}\nTickets: {tickets}\nShowtime: {showtime}\n Total: Rs. {total_bill}"
+
+# Streamlit UI
+st.title("🎬 Movie Ticket Booking Chatbot")
+
+# Initialize session state variables
+if "chat" not in st.session_state:
+    st.session_state.chat = []
+    
+if "booking_mode" not in st.session_state:
+    st.session_state.booking_mode = False
+    
+if "selected_movie" not in st.session_state:
+    st.session_state.selected_movie = None
+
+# Chat interface
+user_input = st.text_input("You:", key="user_input")
+
+# Process user input
+if user_input:
+    st.session_state.chat.append(("You", user_input))
+    
+    # Check if "book" is in the input to activate booking mode
+    if "book" in user_input.lower():
+        st.session_state.booking_mode = True
+        bot_response = "Let's book your tickets. Please complete the form below."
+    else:
+        bot_response = movie_bot.respond(user_input)
+        
+        # Extract movie selection from user input if applicable
+        # for movie in movies.keys():
+        #     if movie.lower() in user_input.lower():
+        #         st.session_state.selected_movie = movie
+        #         break
+    
+    st.session_state.chat.append(("Bot", bot_response))
+
+# Booking form
+if st.session_state.booking_mode:
+    st.write("## Booking Form")
+    
+    movie_options = list(movies.keys())
+    default_idx = 0
+    # if st.session_state.selected_movie:
+    #     default_idx = movie_options.index(st.session_state.selected_movie)
+        
+    movie = st.selectbox("Choose a movie", movie_options, index=default_idx)
+    showtime = st.selectbox("Choose a showtime", movies[movie])
+    tickets = st.number_input("Number of tickets", min_value=1, step=1, value=1)
+    
+    if st.button("Confirm Booking"):
+        booking_msg = book_tickets(movie, tickets, showtime)
+        st.session_state.chat.append(("Bot", booking_msg))
+        st.session_state.booking_mode = False
+        st.session_state.selected_movie = None
+        st.rerun()
+
+st.write("## Conversation")
+for speaker, msg in st.session_state.chat:
+    if speaker == "You":
+        col1, col2 = st.columns([1, 5])
+        with col2:
+            st.markdown(f"<div style='text-align: right; background-color: #000000; padding: 10px; border-radius: 10px; margin: 5px;'>{msg}</div>", unsafe_allow_html=True)
+    else:
+        col1, col2 = st.columns([5, 1])
+        with col1:
+            st.markdown(f"<div style='text-align: left; background-color: #000000; padding: 10px; border-radius: 10px; margin: 5px;'>{msg}</div>", unsafe_allow_html=True)

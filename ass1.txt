@@ -1,0 +1,155 @@
+#include<iostream>
+#include<stack>
+#include<queue>
+#include<vector>
+using namespace std;
+class Graph{
+    private:
+        int vertices ;
+        vector<vector<int>> Adj_list;
+    public:
+        Graph( int v) {
+            vertices =  v;
+            Adj_list = vector<vector<int>> (v);
+        }
+        void Add_edge(int u , int v){
+            Adj_list[u].push_back(v);
+            Adj_list[v].push_back(u);
+        }
+
+        void DFS_recursive(int vertex){
+            vector<bool> visited(vertices ,false);
+            cout<<"DFS recursive is starting from:" <<vertex <<endl;
+            DFS_util(vertex, visited);
+            cout<<endl;
+        }
+        void DFS_util(int vertex, vector<bool>& visited){
+            visited[vertex] = true;
+            cout << vertex << " ";
+            for(int n : Adj_list[vertex]){
+                if(visited[n] == false){
+                    DFS_util(n , visited);
+                }
+            }
+            
+        }
+        void DFS_iter(int vertex){
+            vector<bool> visited(vertices, false);
+            stack<int> s;
+            s.push(vertex);
+            cout<<"DFS_iteration: ->";
+            while(!s.empty()){
+                int current = s.top();
+                cout<<current<<" ";
+                s.pop();
+                if(!visited[current]){
+                    visited[current] = true;
+                    for(int i = Adj_list[current].size() - 1; i >= 0; i--){
+                        int neigh = Adj_list[current][i];
+                        if(!visited[neigh]){
+                            s.push(neigh);
+                        }
+                    }
+                }
+            }
+
+
+            cout<<endl;
+        }
+        void BFS_recursive(int vertex){
+            vector<bool> visited(vertices,false);
+            queue<int> q;
+            visited[vertex] = true;
+            q.push(vertex);
+            cout<<"BFS-> iteration: ";
+            BFS_util(q,visited);
+            cout<<endl;
+
+        }
+        void BFS_util(queue<int>&q, vector<bool> &visited){
+            if(q.empty()){
+                return;
+            }
+            int current  = q.front();
+            visited[current] = true;
+            q.pop();
+            
+            cout<<current<<" ";
+            for(int n: Adj_list[current]){
+                if(!visited[n]){
+                    visited[n] = true;
+                    q.push(n);
+                }
+            }
+            BFS_util(q,visited);
+        }
+        void BFS_iter(int vertex){
+            vector<bool> visited(vertices, false);
+            queue<int> q;
+            cout<<"BFS iteration --> "<<vertex<<" ";
+            visited[vertex] = true;
+            q.push(vertex);
+            while(!q.empty()){
+                int current = q.front();
+                cout<<current<<" ";
+                q.pop();
+                visited[current] = true;
+                for(int n: Adj_list[current]){
+                    if(!visited[n]){
+                        visited[n] = true;
+                        q.push(n);
+                    }
+                }
+            }
+            cout<<endl;
+        }
+        void display_graph(){
+            cout<<"Displaying the adj_list in the graph"<<endl;
+            for(int i = 0 ; i < vertices; i++){
+                cout<<"Vertex: "<<i<<" -> ";
+                for(int n : Adj_list[i]){
+                    cout<<n<<" ";
+                }
+                cout<<endl;
+            }
+        }
+        bool isConnected(){
+            if(vertices == 0){
+                return false;
+            }
+            vector<bool> visited(vertices, false);
+            DFS_util(0, visited);
+            for(int i = 0 ; i < vertices; i++){
+                if(visited[i] == false){
+                    return false;
+                }
+            }
+            return true;
+
+        }
+};
+int main() {
+    Graph g(5);
+
+    g.Add_edge(0, 1);
+    g.Add_edge(0, 2);
+    g.Add_edge(1, 3);
+    g.Add_edge(1, 4);
+
+    g.display_graph();
+
+    g.DFS_recursive(0);
+    g.DFS_iter(0);
+
+    g.BFS_recursive(0);
+    g.BFS_iter(0);
+
+    if(g.isConnected()) {
+        cout << "The graph is connected." << endl;
+    } else {
+        cout << "The graph is not connected." << endl;
+    }
+
+    return 0;
+}
+
